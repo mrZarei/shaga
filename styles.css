@@ -321,6 +321,10 @@ h2.center + .intro { margin-top: -.4rem; }
 .therapist-img { margin: 0; }
 .therapist-img img {
   width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  object-position: center 12%;
   border-radius: var(--radius);
   box-shadow: 0 20px 50px rgba(49,49,49,.14);
 }

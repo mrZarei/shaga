@@ -30,6 +30,7 @@
       <a href="#behandlingen">Behandlingen</a>
       <a href="#resultat">Resultat</a>
       <a href="#kampanj">Kampanj</a>
+      <a href="#omdomen">Omdömen</a>
       <a href="#faq">Frågor</a>
     </nav>
     <a class="btn btn-small btn-shine" href="https://www.bokadirekt.se/places/sara-sthlm-beauty-58093" target="_blank" rel="noopener">Boka tid</a>
@@ -364,6 +365,34 @@
         <li>Gesällbrev</li>
       </ul>
     </div>
+  </div>
+</section>
+
+<!-- OMDÖMEN -->
+<!-- Byt till den relativa sökvägen "/wp-json/custom/v1/bokadirekt-reviews" när sidan ligger på samma domän som WordPress. -->
+<section class="section reviews-section" id="omdomen" data-reviews-endpoint="https://sarasthlmbeauty.com/wp-json/custom/v1/bokadirekt-reviews">
+  <div class="wrap">
+    <span class="eyebrow center" data-reveal>Omdömen</span>
+    <h2 class="center" data-reveal data-reveal-delay="60">Vad mina kunder säger</h2>
+    <p class="intro center" data-reveal data-reveal-delay="120">Riktiga omdömen från kunder som bokat via Bokadirekt.</p>
+
+    <div class="reviews-summary" data-reviews-summary hidden>
+      <strong class="reviews-score" data-reviews-average>&ndash;</strong>
+      <span class="stars" data-reviews-stars aria-hidden="true"></span>
+      <span class="reviews-count" data-reviews-count></span>
+    </div>
+
+    <div class="reviews-rail">
+      <button class="rv-nav rv-prev" type="button" aria-label="Föregående omdömen" hidden>&lsaquo;</button>
+      <div class="reviews-track" data-reviews-track tabindex="0" role="list" aria-label="Kundomdömen" aria-busy="true">
+        <article class="review-card is-skeleton" aria-hidden="true"><span class="sk"></span><span class="sk"></span><span class="sk"></span><span class="sk"></span></article>
+        <article class="review-card is-skeleton" aria-hidden="true"><span class="sk"></span><span class="sk"></span><span class="sk"></span><span class="sk"></span></article>
+        <article class="review-card is-skeleton" aria-hidden="true"><span class="sk"></span><span class="sk"></span><span class="sk"></span><span class="sk"></span></article>
+      </div>
+      <button class="rv-nav rv-next" type="button" aria-label="Fler omdömen" hidden>&rsaquo;</button>
+    </div>
+
+    <p class="reviews-status" data-reviews-status role="status">Hämtar omdömen&hellip;</p>
   </div>
 </section>
 

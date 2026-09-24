@@ -229,6 +229,164 @@
     }, { passive: true });
   }
 
+  /* ---------- Bokadirekt reviews ---------- */
+  const reviewsSection = $('[data-reviews-endpoint]');
+  if (reviewsSection && 'fetch' in window) {
+    const track = $('[data-reviews-track]', reviewsSection);
+    const status = $('[data-reviews-status]', reviewsSection);
+    const summary = $('[data-reviews-summary]', reviewsSection);
+    const averageEl = $('[data-reviews-average]', reviewsSection);
+    const starsEl = $('[data-reviews-stars]', reviewsSection);
+    const countEl = $('[data-reviews-count]', reviewsSection);
+    const btnPrevRv = $('.rv-prev', reviewsSection);
+    const btnNextRv = $('.rv-next', reviewsSection);
+
+    const PAGE_SIZE = 30;
+    const dateFormat = new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    let rendered = 0;
+    let scoreSum = 0;
+    let scoreCount = 0;
+
+    const buildStars = (score) => {
+      const wrap = document.createElement('span');
+      wrap.className = 'stars';
+      wrap.setAttribute('role', 'img');
+      wrap.setAttribute('aria-label', `${score} av 5 i betyg`);
+      for (let i = 1; i <= 5; i++) {
+        const star = document.createElement('i');
+        star.textContent = '★';
+        if (i > Math.round(score)) star.className = 'is-empty';
+        wrap.appendChild(star);
+      }
+      return wrap;
+    };
+
+    const buildCard = (item, order) => {
+      const card = document.createElement('article');
+      card.className = 'review-card rv-in';
+      card.setAttribute('role', 'listitem');
+      if (!reduceMotion) card.style.animationDelay = Math.min(order, 6) * 70 + 'ms';
+
+      const quote = document.createElement('span');
+      quote.className = 'rv-quote';
+      quote.setAttribute('aria-hidden', 'true');
+      quote.textContent = '”';
+      card.appendChild(quote);
+
+      const stars = buildStars(Number(item.review.score) || 0);
+      stars.classList.add('rv-stars');
+      card.appendChild(stars);
+
+      const text = document.createElement('p');
+      text.className = 'rv-text';
+      text.textContent = String(item.review.text).trim();
+      card.appendChild(text);
+
+      const name = (item.author && item.author.name ? String(item.author.name) : 'Kund').trim();
+      const meta = document.createElement('footer');
+      meta.className = 'rv-meta';
+
+      const avatar = document.createElement('span');
+      avatar.className = 'rv-avatar';
+      avatar.setAttribute('aria-hidden', 'true');
+      avatar.textContent = name.charAt(0).toUpperCase();
+      meta.appendChild(avatar);
+
+      const who = document.createElement('span');
+      who.className = 'rv-who';
+      const whoName = document.createElement('strong');
+      whoName.textContent = name;
+      who.appendChild(whoName);
+
+      const created = new Date(item.createdAt);
+      if (!Number.isNaN(created.getTime())) {
+        const time = document.createElement('time');
+        time.dateTime = created.toISOString().slice(0, 10);
+        time.textContent = dateFormat.format(created);
+        who.appendChild(time);
+      }
+      meta.appendChild(who);
+      card.appendChild(meta);
+      return card;
+    };
+
+    const updateSummary = (total) => {
+      if (!scoreCount) return;
+      const average = scoreSum / scoreCount;
+      averageEl.textContent = average.toFixed(1).replace('.', ',');
+      starsEl.replaceChildren(...buildStars(average).childNodes);
+      countEl.textContent = `${total || scoreCount} omdömen på Bokadirekt`;
+      summary.hidden = false;
+    };
+
+    const updateNav = () => {
+      if (!btnPrevRv || !btnNextRv) return;
+      const maxScroll = track.scrollWidth - track.clientWidth;
+      const showNav = maxScroll > 8 && rendered > 0;
+      btnPrevRv.hidden = !showNav;
+      btnNextRv.hidden = !showNav;
+      btnPrevRv.disabled = track.scrollLeft <= 8;
+      btnNextRv.disabled = track.scrollLeft >= maxScroll - 8;
+    };
+
+    const load = async () => {
+      try {
+        const url = new URL(reviewsSection.dataset.reviewsEndpoint, window.location.href);
+        url.searchParams.set('page', '1');
+        url.searchParams.set('limit', String(PAGE_SIZE));
+
+        const response = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        const items = Array.isArray(data.items) ? data.items : [];
+
+        const fragment = document.createDocumentFragment();
+        items.forEach((item) => {
+          const score = Number(item && item.review && item.review.score);
+          if (Number.isFinite(score)) { scoreSum += score; scoreCount += 1; }
+          const text = item && item.review && item.review.text;
+          if (!text || !String(text).trim()) return;
+          fragment.appendChild(buildCard(item, rendered++));
+        });
+        track.replaceChildren(fragment);
+        track.setAttribute('aria-busy', 'false');
+
+        updateSummary(Number(data.count));
+        status.hidden = rendered > 0;
+        if (!rendered) status.textContent = 'Inga omdömen att visa just nu.';
+        updateNav();
+      } catch (error) {
+        track.replaceChildren();
+        track.setAttribute('aria-busy', 'false');
+        status.hidden = false;
+        status.textContent = 'Omdömena kunde inte hämtas just nu – du hittar dem alla på Bokadirekt.';
+      }
+    };
+
+    const scrollByCard = (direction) => {
+      const card = $('.review-card', track);
+      const step = card ? card.getBoundingClientRect().width + 20 : track.clientWidth * 0.8;
+      track.scrollBy({ left: step * direction, behavior: reduceMotion ? 'auto' : 'smooth' });
+    };
+
+    if (btnPrevRv) btnPrevRv.addEventListener('click', () => scrollByCard(-1));
+    if (btnNextRv) btnNextRv.addEventListener('click', () => scrollByCard(1));
+    track.addEventListener('scroll', updateNav, { passive: true });
+    window.addEventListener('resize', updateNav);
+
+    if ('IntersectionObserver' in window) {
+      const reviewsObserver = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        reviewsObserver.disconnect();
+        load();
+      }, { rootMargin: '200px' });
+      reviewsObserver.observe(reviewsSection);
+    } else {
+      load();
+    }
+  }
+
   /* ---------- Year ---------- */
   $$('[data-year]').forEach((el) => { el.textContent = new Date().getFullYear(); });
 })();

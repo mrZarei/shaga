@@ -20,6 +20,7 @@
 /* Bildplatser – visar en snygg platshållare tills riktig bild finns */
 .img-slot { position: relative; overflow: hidden; border-radius: var(--radius); }
 .img-slot img { width: 100%; }
+.hero-img-frame video { display: block; width: 100%; }
 .img-slot.is-missing {
   aspect-ratio: 4 / 5;
   background:
